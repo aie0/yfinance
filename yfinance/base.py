@@ -39,26 +39,6 @@ from . import utils
 # import sys as _sys
 
 from . import shared
-
-
-# Set-up user agent rotator
-try:
-    from random_user_agent.user_agent import UserAgent
-    from random_user_agent.params import SoftwareName, OperatingSystem
-
-    software_names = [SoftwareName.CHROME.value, SoftwareName.FIREFOX.value, SoftwareName.EDGE.value]
-    operating_systems = [OperatingSystem.LINUX.value, OperatingSystem.WINDOWS.value, OperatingSystem.MAC.value]
-    user_agent_rotator = UserAgent(software_names=software_names, operating_systems=operating_systems, limit=100)
-except ImportError:
-    print("""Warning - User agent rotator is not available.
-             If needed, install using: 
-             pip install random_user_agent""")
-    UserAgent = None
-    SoftwareName = None
-    OperatingSystem = None
-    user_agent_rotator = None
-
-
 class TickerBase():
     def __init__(self, ticker):
         self.ticker = ticker.upper()
@@ -333,7 +313,7 @@ class TickerBase():
 
         # sustainability
         d = {}
-        if isinstance(data.get('esgScores'), dict):
+        if isinstance(data.get('esgScores'), dict) and 'err' not in data['esgScores']:
             for item in data['esgScores']:
                 if not isinstance(data['esgScores'][item], (dict, list)):
                     d[item] = data['esgScores'][item]
