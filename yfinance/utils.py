@@ -34,6 +34,23 @@ except ImportError:
     import json as _json
 
 
+# Set-up user agent rotator
+try:
+    from random_user_agent.user_agent import UserAgent
+    from random_user_agent.params import SoftwareName, OperatingSystem
+
+    software_names = [SoftwareName.CHROME.value, SoftwareName.FIREFOX.value, SoftwareName.EDGE.value]
+    operating_systems = [OperatingSystem.LINUX.value, OperatingSystem.WINDOWS.value, OperatingSystem.MAC.value]
+    user_agent_rotator = UserAgent(software_names=software_names, operating_systems=operating_systems, limit=100)
+except ImportError:
+    print("""Warning - User agent rotator is not available.
+             If needed, install using: 
+             pip install random_user_agent""")
+    UserAgent = None
+    SoftwareName = None
+    OperatingSystem = None
+    user_agent_rotator = None
+
 def empty_df(index=[]):
     empty = _pd.DataFrame(index=index, data={
         'Open': _np.nan, 'High': _np.nan, 'Low': _np.nan,
@@ -41,12 +58,19 @@ def empty_df(index=[]):
     empty.index.name = 'Date'
     return empty
 
+def get_html(url, proxy=None):
+    if user_agent_rotator is not None:
+        headers = {'User-Agent': user_agent_rotator.get_random_user_agent()}
+    else:
+        headers = {}
+
+    return _requests.get(url=url, proxies=proxy, headers=headers).text
 
 def get_json(url, proxy=None):
-    html = _requests.get(url=url, proxies=proxy).text
+    html = get_html(url, proxy)
 
     if "QuoteSummaryStore" not in html:
-        html = _requests.get(url=url, proxies=proxy).text
+        html = get_html(url, proxy)
         if "QuoteSummaryStore" not in html:
             return {}
 
