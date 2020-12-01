@@ -1,0 +1,7 @@
+{
+    "python.pythonPath": "/Users/victorgenin/anaconda3/envs/capital_processing/bin/python",
+    "python.linting.enabled": true,
+    "python.linting.lintOnSave": true,
+    "python.formatting.provider": "black",
+    "editor.formatOnSave": true
+}
