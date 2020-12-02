@@ -258,7 +258,7 @@ class TickerBase:
 
     # ------------------------
 
-    def _get_fundamentals(self, kind=None, proxy=None):
+    def _get_fundamentals(self, kind=None, proxy=None, with_financials=False):
         def cleanup(data):
             df = _pd.DataFrame(data).drop(columns=["maxAge"])
             for col in df.columns:
@@ -406,38 +406,39 @@ class TickerBase:
         except Exception:
             pass
 
-        # get fundamentals
-        data = utils.get_json(url + "/financials", proxy)
+        if with_financials:
+            # get fundamentals
+            data = utils.get_json(url + "/financials", proxy)
 
-        # generic patterns
-        for key in (
-            (self._cashflow, "cashflowStatement", "cashflowStatements"),
-            (self._balancesheet, "balanceSheet", "balanceSheetStatements"),
-            (self._financials, "incomeStatement", "incomeStatementHistory"),
-        ):
+            # generic patterns
+            for key in (
+                (self._cashflow, "cashflowStatement", "cashflowStatements"),
+                (self._balancesheet, "balanceSheet", "balanceSheetStatements"),
+                (self._financials, "incomeStatement", "incomeStatementHistory"),
+            ):
 
-            item = key[1] + "History"
-            if isinstance(data.get(item), dict):
-                key[0]["yearly"] = cleanup(data[item][key[2]])
+                item = key[1] + "History"
+                if isinstance(data.get(item), dict):
+                    key[0]["yearly"] = cleanup(data[item][key[2]])
 
-            item = key[1] + "HistoryQuarterly"
-            if isinstance(data.get(item), dict):
-                key[0]["quarterly"] = cleanup(data[item][key[2]])
+                item = key[1] + "HistoryQuarterly"
+                if isinstance(data.get(item), dict):
+                    key[0]["quarterly"] = cleanup(data[item][key[2]])
 
-        # earnings
-        if isinstance(data.get("earnings"), dict):
-            earnings = data["earnings"]["financialsChart"]
-            df = _pd.DataFrame(earnings["yearly"]).set_index("date")
-            df.columns = utils.camel2title(df.columns)
-            df.index.name = "Year"
-            self._earnings["yearly"] = df
+            # earnings
+            if isinstance(data.get("earnings"), dict):
+                earnings = data["earnings"]["financialsChart"]
+                df = _pd.DataFrame(earnings["yearly"]).set_index("date")
+                df.columns = utils.camel2title(df.columns)
+                df.index.name = "Year"
+                self._earnings["yearly"] = df
 
-            df = _pd.DataFrame(earnings["quarterly"]).set_index("date")
-            df.columns = utils.camel2title(df.columns)
-            df.index.name = "Quarter"
-            self._earnings["quarterly"] = df
+                df = _pd.DataFrame(earnings["quarterly"]).set_index("date")
+                df.columns = utils.camel2title(df.columns)
+                df.index.name = "Quarter"
+                self._earnings["quarterly"] = df
 
-        self._fundamentals = True
+            self._fundamentals = True
 
     def get_recommendations(self, proxy=None, as_dict=False, *args, **kwargs):
         self._get_fundamentals(proxy)
