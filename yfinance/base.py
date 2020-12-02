@@ -258,7 +258,9 @@ class TickerBase:
 
     # ------------------------
 
-    def _get_fundamentals(self, kind=None, proxy=None, with_financials=False):
+    def _get_fundamentals(
+        self, kind=None, proxy=None, with_financials=False, with_holders=False
+    ):
         def cleanup(data):
             df = _pd.DataFrame(data).drop(columns=["maxAge"])
             for col in df.columns:
@@ -289,22 +291,20 @@ class TickerBase:
         url = "%s/%s" % (self._scrape_url, self.ticker)
         data = utils.get_json(url, proxy)
 
-        # holders
-        url = "{}/{}/holders".format(self._scrape_url, self.ticker)
-        holders = _pd.read_html(utils.get_html(url))
+        if with_holders:
+            # holders
+            url = "{}/{}/holders".format(self._scrape_url, self.ticker)
+            holders = _pd.read_html(utils.get_html(url))
 
-        if len(holders) >= 3:
-            self._major_holders = holders[0]
-            self._institutional_holders = holders[1]
-            self._mutualfund_holders = holders[2]
-        elif len(holders) >= 2:
-            self._major_holders = holders[0]
-            self._institutional_holders = holders[1]
-        else:
-            self._major_holders = holders[0]
-
-        # self._major_holders = holders[0]
-        # self._institutional_holders = holders[1]
+            if len(holders) >= 3:
+                self._major_holders = holders[0]
+                self._institutional_holders = holders[1]
+                self._mutualfund_holders = holders[2]
+            elif len(holders) >= 2:
+                self._major_holders = holders[0]
+                self._institutional_holders = holders[1]
+            else:
+                self._major_holders = holders[0]
 
         if self._institutional_holders is not None:
             if "Date Reported" in self._institutional_holders:
